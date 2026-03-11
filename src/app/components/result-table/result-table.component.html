@@ -1,0 +1,26 @@
+<section class="result-table">
+  <div class="result-table__header">
+    <div>
+      <p class="section-label">Data Grid</p>
+      <h3>{{ title }}</h3>
+    </div>
+    <span>{{ rowData.length }} rows</span>
+  </div>
+
+  @if (isBrowser) {
+    <ag-grid-angular
+      class="ag-theme-quartz-dark"
+      style="width:100%"
+      [style.height.px]="height"
+      [columnDefs]="columnDefs"
+      [rowData]="rowData"
+      [defaultColDef]="defaultColDef"
+      [gridOptions]="gridOptions"
+      [animateRows]="true">
+    </ag-grid-angular>
+  } @else {
+    <div class="result-table__ssr-placeholder" [style.height.px]="height">
+      Grid will render in the browser.
+    </div>
+  }
+</section>

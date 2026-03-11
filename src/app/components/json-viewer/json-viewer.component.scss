@@ -1,0 +1,20 @@
+.json-viewer {
+  padding: 1.25rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  min-height: 100%;
+
+  h3 {
+    margin: 0.2rem 0 1rem;
+    color: #f5f7fa;
+  }
+}
+
+.section-label {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7f8a99;
+}

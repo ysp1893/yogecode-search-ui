@@ -1,0 +1,139 @@
+.search-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.75fr) minmax(320px, 0.95fr);
+  gap: 1.5rem;
+}
+
+.search-layout__main {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.search-toolbar,
+.entity-fields-panel,
+.loading-panel {
+  padding: 1.4rem;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.search-toolbar {
+  h1 {
+    margin: 0.35rem 0 1rem;
+    color: #f5f7fa;
+  }
+}
+
+.page-kicker {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #7f8a99;
+  font-size: 0.74rem;
+}
+
+.search-toolbar__controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+.search-button__content,
+.loading-panel__content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.entity-fields-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.entity-fields-panel h2 {
+  margin: 0.35rem 0 0.4rem;
+  color: #f5f7fa;
+}
+
+.entity-fields-panel__hint,
+.loading-panel__text {
+  margin: 0;
+  color: #9bacbf;
+}
+
+.entity-fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.loading-panel {
+  background: rgba(31, 111, 235, 0.08);
+  border-color: rgba(31, 111, 235, 0.18);
+}
+
+.loading-spinner {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #6ab7ff;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-spinner--button {
+  width: 0.9rem;
+  height: 0.9rem;
+  border-width: 2px;
+}
+
+.search-layout__side {
+  min-height: 100%;
+}
+
+.response-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  border-radius: 16px;
+  background: rgba(31, 111, 235, 0.08);
+  border: 1px solid rgba(31, 111, 235, 0.16);
+  color: #b9c8dd;
+}
+
+.failure-panel {
+  padding: 1rem 1.2rem;
+  border-radius: 18px;
+  background: rgba(255, 193, 7, 0.08);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.failure-row {
+  margin-top: 0.7rem;
+  color: #f2d17b;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 1200px) {
+  .search-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .search-toolbar__controls {
+    grid-template-columns: 1fr;
+  }
+
+  .entity-fields-grid {
+    grid-template-columns: 1fr;
+  }
+}

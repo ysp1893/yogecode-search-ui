@@ -1,0 +1,58 @@
+<section class="filter-builder">
+  <div class="filter-builder__header">
+    <div>
+      <p class="section-label">Filters</p>
+      <h3>Build your federated query</h3>
+    </div>
+
+    <button mat-stroked-button type="button" (click)="addFilter()">
+      Add filter
+    </button>
+  </div>
+
+  <form [formGroup]="form">
+    <div formArrayName="filters" class="filter-list">
+      @for (filter of filters.controls; track $index) {
+        <div class="filter-row" [formGroupName]="$index">
+          <mat-form-field appearance="outline">
+            <mat-label>Field</mat-label>
+            <input
+              matInput
+              formControlName="field"
+              placeholder="UserName"
+              (blur)="emitFilters()"
+            />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Operator</mat-label>
+            <mat-select formControlName="operator" (selectionChange)="emitFilters()">
+              @for (option of operatorOptions; track option) {
+                <mat-option [value]="option">{{ option }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="value-field">
+            <mat-label>Values</mat-label>
+            <input
+              matInput
+              formControlName="value"
+              placeholder="kumar1144, p1@003"
+              (blur)="emitFilters()"
+            />
+          </mat-form-field>
+
+          <button
+            mat-stroked-button
+            type="button"
+            class="remove-button"
+            (click)="removeFilter($index)"
+          >
+            Remove
+          </button>
+        </div>
+      }
+    </div>
+  </form>
+</section>

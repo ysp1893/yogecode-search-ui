@@ -1,0 +1,17 @@
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand__mark">YS</div>
+    <div>
+      <h1>YogeCode Search</h1>
+      <p>Federated Search Console</p>
+    </div>
+  </div>
+
+  <nav class="nav">
+    @for (item of items; track item.route) {
+      <a class="nav__item" [routerLink]="item.route">
+        {{ item.label }}
+      </a>
+    }
+  </nav>
+</aside>

@@ -1,0 +1,49 @@
+<section class="page-intro">
+  <div>
+    <p class="page-kicker">Overview</p>
+    <h1>Operational overview for federated search</h1>
+  </div>
+  <p class="page-copy">
+    Monitor datasource health, entity coverage, relation topology, and keyword mappings from one centralized workspace.
+  </p>
+</section>
+
+<div class="summary-grid">
+  <article class="summary-card">
+    <p>Total Datasources</p>
+    <h2>{{ stats.datasources }}</h2>
+  </article>
+
+  <article class="summary-card">
+    <p>Total Entities</p>
+    <h2>{{ stats.entities }}</h2>
+  </article>
+
+  <article class="summary-card">
+    <p>Total Relations</p>
+    <h2>{{ stats.relations }}</h2>
+  </article>
+
+  <article class="summary-card">
+    <p>Keyword Mappings</p>
+    <h2>{{ stats.keywords }}</h2>
+  </article>
+</div>
+
+<section class="activity-panel">
+  <div class="activity-panel__header">
+    <div>
+      <p class="page-kicker">Backend status</p>
+      <h2>API-backed metadata snapshot</h2>
+    </div>
+  </div>
+
+  <div class="activity-list">
+    @for (item of activity; track item.title) {
+      <article class="activity-item">
+        <strong>{{ item.title }}</strong>
+        <span>{{ item.time }}</span>
+      </article>
+    }
+  </div>
+</section>

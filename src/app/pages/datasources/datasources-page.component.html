@@ -1,0 +1,23 @@
+<section class="page-shell">
+  <div class="page-shell__header">
+    <div>
+      <p class="page-kicker">Administration</p>
+      <h1>Datasource management</h1>
+    </div>
+
+    <div class="action-bar">
+      <button mat-stroked-button type="button">Create datasource</button>
+      <button mat-stroked-button type="button">Edit datasource</button>
+      <button mat-stroked-button type="button">Delete datasource</button>
+      <button mat-flat-button type="button" (click)="testFirstDatasource()">
+        Test connection
+      </button>
+    </div>
+  </div>
+
+  <app-result-table
+    [columnDefs]="columnDefs"
+    [rowData]="rows"
+    title="Registered datasources"
+  />
+</section>
