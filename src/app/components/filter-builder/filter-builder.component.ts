@@ -32,6 +32,10 @@ export class FilterBuilderComponent {
   @Output() filtersChanged = new EventEmitter<SearchFilter[]>();
 
   protected readonly operatorOptions = [
+    'GT',
+    'GTE',
+    'LT',
+    'LTE',
     'EQ',
     'NE',
     'LIKE',

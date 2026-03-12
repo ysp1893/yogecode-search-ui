@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -23,16 +23,34 @@ import { SearchFilter } from '../../models/search.model';
   templateUrl: './filter-chips.component.html',
   styleUrl: './filter-chips.component.scss'
 })
-export class FilterChipsComponent {
+export class FilterChipsComponent implements OnChanges {
   private readonly formBuilder = inject(FormBuilder);
 
   @Input() filters: SearchFilter[] = [];
   @Input() openComposer = false;
+  @Input() rootEntity = '';
+  @Input() entityTargets: string[] = [];
+  @Input() dateField = '';
+  @Input() dateFieldTarget = '';
+  @Input() timeRangeMode: 'preset' | 'custom' = 'preset';
+  @Input() selectedTimeRange = 'Last 24 hours';
+  @Input() customFrom = '';
+  @Input() customTo = '';
 
   @Output() filtersChange = new EventEmitter<SearchFilter[]>();
   @Output() composerToggled = new EventEmitter<boolean>();
+  @Output() dateFieldChange = new EventEmitter<string>();
+  @Output() dateFieldTargetChange = new EventEmitter<string>();
+  @Output() timeRangeModeChange = new EventEmitter<'preset' | 'custom'>();
+  @Output() timeRangeChange = new EventEmitter<string>();
+  @Output() customFromChange = new EventEmitter<string>();
+  @Output() customToChange = new EventEmitter<string>();
 
   protected readonly operatorOptions = [
+    'GT',
+    'GTE',
+    'LT',
+    'LTE',
     'EQ',
     'NE',
     'LIKE',
@@ -41,12 +59,61 @@ export class FilterChipsComponent {
     'IS_NULL',
     'IS_NOT_NULL'
   ];
+  protected readonly timeRanges = [
+    'Last 15 minutes',
+    'Last 1 hour',
+    'Last 6 hours',
+    'Last 24 hours',
+    'Last 7 days'
+  ];
+  protected readonly timeRangeModes: Array<'preset' | 'custom'> = ['preset', 'custom'];
 
   protected readonly composerForm = this.formBuilder.group({
+    targetEntity: [''],
     field: ['', Validators.required],
     operator: ['EQ', Validators.required],
     value: ['']
   });
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['rootEntity'] || changes['entityTargets']) {
+      const availableTargets = this.availableEntityTargets;
+      const selectedTarget = this.composerForm.getRawValue().targetEntity ?? '';
+
+      if (availableTargets.length === 0) {
+        this.composerForm.patchValue({ targetEntity: '' }, { emitEvent: false });
+        return;
+      }
+
+      if (!selectedTarget || !availableTargets.includes(selectedTarget)) {
+        this.composerForm.patchValue({ targetEntity: this.defaultTargetEntity }, { emitEvent: false });
+      }
+
+      if (!this.dateFieldTarget || !availableTargets.includes(this.dateFieldTarget)) {
+        this.dateFieldTargetChange.emit(this.defaultTargetEntity);
+      }
+    }
+  }
+
+  protected get availableEntityTargets(): string[] {
+    return this.entityTargets.length
+      ? this.entityTargets
+      : this.rootEntity
+        ? [this.rootEntity]
+        : [];
+  }
+
+  protected get defaultTargetEntity(): string {
+    return this.rootEntity || this.availableEntityTargets[0] || '';
+  }
+
+  protected formatEntityOption(entityCode: string): string {
+    return entityCode === this.rootEntity ? `${entityCode} (root)` : entityCode;
+  }
+
+  protected get activeDateTarget(): string {
+    return this.dateFieldTarget || this.defaultTargetEntity;
+  }
 
   protected toggleComposer(force?: boolean): void {
     const nextState = force ?? !this.openComposer;
@@ -65,18 +132,22 @@ export class FilterChipsComponent {
     }
 
     const formValue = this.composerForm.getRawValue();
+    const field = this.buildScopedField(
+      formValue.targetEntity ?? this.defaultTargetEntity,
+      formValue.field ?? ''
+    );
     const operator = formValue.operator ?? 'EQ';
     const trimmedValue = `${formValue.value ?? ''}`.trim();
 
     const nextFilter: SearchFilter =
       operator === 'IS_NULL' || operator === 'IS_NOT_NULL'
         ? {
-            field: formValue.field ?? '',
+            field,
             operator
           }
         : operator === 'IN' || operator === 'NOT_IN'
           ? {
-              field: formValue.field ?? '',
+              field,
               operator,
               value: trimmedValue
                 .split(',')
@@ -84,13 +155,18 @@ export class FilterChipsComponent {
                 .filter(Boolean)
             }
           : {
-              field: formValue.field ?? '',
+              field,
               operator,
               value: trimmedValue
             };
 
     this.filtersChange.emit([...this.filters, nextFilter]);
-    this.composerForm.reset({ field: '', operator: 'EQ', value: '' });
+    this.composerForm.reset({
+      targetEntity: this.defaultTargetEntity,
+      field: '',
+      operator: 'EQ',
+      value: ''
+    });
     this.toggleComposer(false);
   }
 
@@ -108,8 +184,36 @@ export class FilterChipsComponent {
     return `${filter.field} ${operatorLabel} ${filter.value ?? ''}`;
   }
 
+  protected onDateFieldTargetSelection(targetEntity: string): void {
+    this.dateFieldTargetChange.emit(targetEntity);
+  }
+
+  protected onDateFieldInput(value: string): void {
+    this.dateFieldChange.emit(value);
+  }
+
+  protected onTimeRangeModeSelection(mode: 'preset' | 'custom'): void {
+    this.timeRangeModeChange.emit(mode);
+  }
+
+  protected onTimeRangeSelection(range: string): void {
+    this.timeRangeChange.emit(range);
+  }
+
+  protected onCustomFromInput(value: string): void {
+    this.customFromChange.emit(value);
+  }
+
+  protected onCustomToInput(value: string): void {
+    this.customToChange.emit(value);
+  }
+
   private getOperatorLabel(operator: string): string {
     const labelMap: Record<string, string> = {
+      GT: '>',
+      GTE: '>=',
+      LT: '<',
+      LTE: '<=',
       EQ: '=',
       NE: '!=',
       LIKE: 'contains',
@@ -120,5 +224,17 @@ export class FilterChipsComponent {
     };
 
     return labelMap[operator] ?? operator;
+  }
+
+  private buildScopedField(targetEntity: string, field: string): string {
+    const trimmedField = field.trim();
+
+    if (!trimmedField) {
+      return '';
+    }
+
+    return targetEntity && targetEntity !== this.rootEntity
+      ? `${targetEntity}.${trimmedField}`
+      : trimmedField;
   }
 }

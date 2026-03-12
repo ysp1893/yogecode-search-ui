@@ -32,13 +32,12 @@
 
 .query-builder__bar {
   display: grid;
-  grid-template-columns: minmax(220px, 260px) max-content max-content minmax(220px, 260px) max-content;
+  grid-template-columns: minmax(220px, 260px) max-content max-content max-content;
   gap: 0.85rem;
   align-items: center;
 }
 
-.query-builder__entity,
-.query-builder__time-range {
+.query-builder__entity {
   min-width: 0;
 }
 

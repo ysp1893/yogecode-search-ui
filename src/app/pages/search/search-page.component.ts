@@ -64,7 +64,12 @@ export class SearchPageComponent implements OnInit {
   protected partialFailures: string[] = [];
   protected searchError = '';
   protected relationsHint = 'Loading relations...';
+  protected selectedDateField = 'createdate';
+  protected selectedDateFieldTarget = 'cdr';
   protected selectedTimeRange = 'Last 24 hours';
+  protected timeRangeMode: 'preset' | 'custom' = 'preset';
+  protected customDateFrom = '';
+  protected customDateTo = this.toDateTimeLocal(new Date());
   protected showFilterComposer = false;
   protected inspectorOpen = false;
   protected selectedResultRow: Record<string, unknown> | null = null;
@@ -109,6 +114,7 @@ export class SearchPageComponent implements OnInit {
 
   protected onEntitySelected(entityCode: string): void {
     this.selectedEntity = entityCode;
+    this.selectedDateFieldTarget = entityCode;
     this.selectedIncludes = [];
     this.searchForm.patchValue({ entity: entityCode, include: [] }, { emitEvent: false });
     this.loadRelations(entityCode);
@@ -145,6 +151,35 @@ export class SearchPageComponent implements OnInit {
 
   protected onTimeRangeChanged(range: string): void {
     this.selectedTimeRange = range;
+    this.updatePreview();
+  }
+
+  protected onDateFieldChanged(field: string): void {
+    this.selectedDateField = field.trim();
+    this.updatePreview();
+  }
+
+  protected onDateFieldTargetChanged(entityCode: string): void {
+    this.selectedDateFieldTarget = entityCode;
+    this.updatePreview();
+  }
+
+  protected onTimeRangeModeChanged(mode: 'preset' | 'custom'): void {
+    this.timeRangeMode = mode;
+    if (mode === 'custom' && !this.customDateTo) {
+      this.customDateTo = this.toDateTimeLocal(new Date());
+    }
+    this.updatePreview();
+  }
+
+  protected onCustomDateFromChanged(value: string): void {
+    this.customDateFrom = value;
+    this.updatePreview();
+  }
+
+  protected onCustomDateToChanged(value: string): void {
+    this.customDateTo = value;
+    this.updatePreview();
   }
 
   protected focusColumnBuilder(): void {
@@ -186,6 +221,13 @@ export class SearchPageComponent implements OnInit {
       },
       error: (error) => {
         this.deferUiUpdate(() => {
+          const responseError = this.normalizeErrorResponse(error?.error);
+          const errorMessage =
+            (typeof responseError?.['message'] === 'string' ? responseError['message'] : undefined) ??
+            error?.error?.message ??
+            error?.message ??
+            'Search request failed. Please verify filters and selected relations.';
+
           this.isSearching = false;
           this.results = [];
           this.columnDefs = [];
@@ -196,11 +238,8 @@ export class SearchPageComponent implements OnInit {
             flattenedCount: 0,
             columnCount: 0
           };
-          this.responsePreview = error?.error ?? { message: error?.message ?? 'Search failed.' };
-          this.searchError =
-            error?.error?.message ??
-            error?.message ??
-            'Search request failed. Please verify filters and selected relations.';
+          this.responsePreview = { ...(responseError ?? {}), message: errorMessage };
+          this.searchError = errorMessage;
         });
       },
     });
@@ -283,15 +322,20 @@ export class SearchPageComponent implements OnInit {
   private buildPayload(): SearchRequest {
     const formValue = this.searchForm.getRawValue();
     const entityFields = this.buildEntityFields();
+    const filters = this.buildRequestFilters();
 
     return {
       entity: formValue.entity ?? undefined,
-      filters: this.filters.length ? this.filters : undefined,
+      filters: filters.length ? filters : undefined,
       entityFields: Object.keys(entityFields).length ? entityFields : undefined,
       include: formValue.include?.length ? formValue.include : undefined,
       page: formValue.page ?? 0,
       size: formValue.size ?? 20
     };
+  }
+
+  private buildRequestFilters(): SearchFilter[] {
+    return [...this.buildDateFilters(), ...this.filters];
   }
 
   private buildEntityFields(): Record<string, string[]> {
@@ -339,6 +383,126 @@ export class SearchPageComponent implements OnInit {
     }));
   }
 
+  private buildDateFilters(now = new Date()): SearchFilter[] {
+    const field = this.buildScopedDateField();
+    if (!field) {
+      return [];
+    }
+
+    return this.timeRangeMode === 'custom'
+      ? this.buildCustomDateFilters(field)
+      : this.buildPresetDateFilters(field, now);
+  }
+
+  private buildPresetDateFilters(field: string, now: Date): SearchFilter[] {
+    const rangeStart = this.getPresetRangeStart(now);
+    if (!rangeStart) {
+      return [];
+    }
+
+    return [
+      {
+        field,
+        operator: 'GTE',
+        value: this.formatDateTime(rangeStart)
+      },
+      {
+        field,
+        operator: 'LTE',
+        value: this.formatDateTime(now)
+      }
+    ];
+  }
+
+  private buildCustomDateFilters(field: string): SearchFilter[] {
+    const fromDate = this.parseDateTimeLocal(this.customDateFrom);
+    const toDate = this.parseDateTimeLocal(this.customDateTo);
+    const filters: SearchFilter[] = [];
+
+    if (fromDate) {
+      filters.push({
+        field,
+        operator: 'GTE',
+        value: this.formatDateTime(fromDate)
+      });
+    }
+
+    if (toDate) {
+      filters.push({
+        field,
+        operator: 'LTE',
+        value: this.formatDateTime(toDate)
+      });
+    }
+
+    return filters;
+  }
+
+  private getPresetRangeStart(now: Date): Date | null {
+    const rangeMap: Record<string, number> = {
+      'Last 15 minutes': 15 * 60 * 1000,
+      'Last 1 hour': 60 * 60 * 1000,
+      'Last 6 hours': 6 * 60 * 60 * 1000,
+      'Last 24 hours': 24 * 60 * 60 * 1000,
+      'Last 7 days': 7 * 24 * 60 * 60 * 1000
+    };
+
+    const duration = rangeMap[this.selectedTimeRange];
+    return typeof duration === 'number' ? new Date(now.getTime() - duration) : null;
+  }
+
+  private formatDateTime(value: Date): string {
+    const pad = (part: number) => `${part}`.padStart(2, '0');
+
+    return [
+      value.getFullYear(),
+      pad(value.getMonth() + 1),
+      pad(value.getDate())
+    ].join('-') +
+      ` ${pad(value.getHours())}:${pad(value.getMinutes())}:${pad(value.getSeconds())}`;
+  }
+
+  private parseDateTimeLocal(value: string): Date | null {
+    const trimmedValue = value.trim();
+    if (!trimmedValue) {
+      return null;
+    }
+
+    const parsed = new Date(trimmedValue);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  }
+
+  private toDateTimeLocal(value: Date): string {
+    const pad = (part: number) => `${part}`.padStart(2, '0');
+
+    return [
+      value.getFullYear(),
+      pad(value.getMonth() + 1),
+      pad(value.getDate())
+    ].join('-') +
+      `T${pad(value.getHours())}:${pad(value.getMinutes())}`;
+  }
+
+  private normalizeErrorResponse(error: unknown): Record<string, unknown> | null {
+    if (!error) {
+      return null;
+    }
+
+    if (typeof error === 'string') {
+      try {
+        return this.normalizeErrorResponse(JSON.parse(error));
+      } catch {
+        return { message: error };
+      }
+    }
+
+    if (typeof error === 'object' && !Array.isArray(error)) {
+      return error as Record<string, unknown>;
+    }
+
+    return { message: `${error}` };
+  }
+
   private normalizeRow(row: Record<string, unknown>): Record<string, unknown> {
     if (!row || typeof row !== 'object' || Array.isArray(row)) {
       return { value: row };
@@ -366,6 +530,17 @@ export class SearchPageComponent implements OnInit {
 
   private isPlainObject(value: unknown): value is Record<string, unknown> {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
+  }
+
+  private buildScopedDateField(): string {
+    const field = this.selectedDateField.trim();
+    if (!field) {
+      return '';
+    }
+
+    return this.selectedDateFieldTarget && this.selectedDateFieldTarget !== this.selectedEntity
+      ? `${this.selectedDateFieldTarget}.${field}`
+      : field;
   }
 }
 

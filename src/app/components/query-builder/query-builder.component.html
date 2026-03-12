@@ -25,15 +25,6 @@
       Add Filter
     </button>
 
-    <mat-form-field appearance="outline" class="query-builder__time-range">
-      <mat-label>Time Range</mat-label>
-      <mat-select [value]="selectedTimeRange" (selectionChange)="onTimeRangeSelection($event)">
-        @for (range of timeRanges; track range) {
-          <mat-option [value]="range">{{ range }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-
     <button mat-flat-button type="button" (click)="runQuery.emit()" [disabled]="isSearching">
       @if (isSearching) {
         Running...

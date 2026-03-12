@@ -27,11 +27,103 @@
     }
   </mat-chip-set>
 
+  <section class="filter-chips__date-filter">
+    <div class="filter-chips__date-header">
+      <div>
+        <p class="section-label">Date Filter</p>
+        <p class="filter-chips__date-hint">Use root fields directly or scope relation fields like `customer.startdate`.</p>
+      </div>
+    </div>
+
+    <div class="filter-chips__date-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>Date Entity</mat-label>
+        <mat-select
+          [value]="activeDateTarget"
+          (selectionChange)="onDateFieldTargetSelection($event.value)"
+        >
+          @for (entity of availableEntityTargets; track entity) {
+            <mat-option [value]="entity">{{ formatEntityOption(entity) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Date Field</mat-label>
+        <input
+          matInput
+          [value]="dateField"
+          [placeholder]="activeDateTarget === rootEntity ? 'createdate' : 'startdate'"
+          (input)="onDateFieldInput($any($event.target).value)"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Range Mode</mat-label>
+        <mat-select
+          [value]="timeRangeMode"
+          (selectionChange)="onTimeRangeModeSelection($event.value)"
+        >
+          @for (mode of timeRangeModes; track mode) {
+            <mat-option [value]="mode">{{ mode === 'preset' ? 'Preset' : 'Custom' }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (timeRangeMode === 'preset') {
+        <mat-form-field appearance="outline">
+          <mat-label>Preset Range</mat-label>
+          <mat-select
+            [value]="selectedTimeRange"
+            (selectionChange)="onTimeRangeSelection($event.value)"
+          >
+            @for (range of timeRanges; track range) {
+              <mat-option [value]="range">{{ range }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      } @else {
+        <mat-form-field appearance="outline">
+          <mat-label>From</mat-label>
+          <input
+            matInput
+            type="datetime-local"
+            [value]="customFrom"
+            (input)="onCustomFromInput($any($event.target).value)"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>To</mat-label>
+          <input
+            matInput
+            type="datetime-local"
+            [value]="customTo"
+            (input)="onCustomToInput($any($event.target).value)"
+          />
+        </mat-form-field>
+      }
+    </div>
+  </section>
+
   @if (openComposer) {
     <form class="filter-chips__composer" [formGroup]="composerForm">
       <mat-form-field appearance="outline">
+        <mat-label>Entity</mat-label>
+        <mat-select formControlName="targetEntity">
+          @for (entity of availableEntityTargets; track entity) {
+            <mat-option [value]="entity">{{ formatEntityOption(entity) }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
         <mat-label>Field</mat-label>
-        <input matInput formControlName="field" placeholder="username" />
+        <input
+          matInput
+          formControlName="field"
+          [placeholder]="defaultTargetEntity === rootEntity ? 'username' : 'field name'"
+        />
       </mat-form-field>
 
       <mat-form-field appearance="outline">

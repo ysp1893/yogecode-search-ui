@@ -1,6 +1,18 @@
 export interface SearchFilter {
   field: string;
-  operator: 'EQ' | 'NE' | 'LIKE' | 'IN' | 'NOT_IN' | 'IS_NULL' | 'IS_NOT_NULL' | string;
+  operator:
+    | 'GT'
+    | 'GTE'
+    | 'LT'
+    | 'LTE'
+    | 'EQ'
+    | 'NE'
+    | 'LIKE'
+    | 'IN'
+    | 'NOT_IN'
+    | 'IS_NULL'
+    | 'IS_NOT_NULL'
+    | string;
   value?: unknown;
 }
 
