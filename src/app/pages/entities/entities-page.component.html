@@ -1,12 +1,45 @@
-<section class="page-shell">
-  <div>
-    <p class="page-kicker">Catalog</p>
-    <h1>Entity registry</h1>
-  </div>
+<section class="registry-page">
+  <header class="registry-page__hero">
+    <div>
+      <p class="page-kicker">Catalog</p>
+      <h1>Entity registry</h1>
+      <p class="registry-page__subtitle">Browse mapped entities and review their configuration in an admin-console workspace.</p>
+    </div>
+    <button mat-stroked-button type="button" disabled>Save Changes</button>
+  </header>
 
-  <app-result-table
-    [columnDefs]="columnDefs"
-    [rowData]="rows"
-    title="Mapped entities"
-  />
+  <div class="registry-page__content">
+    <app-result-grid
+      [title]="'Entity inventory'"
+      [columnDefs]="columnDefs"
+      [rowData]="rows"
+      [height]="500"
+      [totalRows]="rows.length"
+      rowCountLabel="entities"
+      (selectedRowChange)="onEntitySelected($event)"
+    />
+
+    <section class="registry-page__editor">
+      <div class="registry-page__editor-header">
+        <div>
+          <p class="page-kicker">Editor</p>
+          <h2>Entity configuration</h2>
+        </div>
+        <p class="registry-page__note">UI redesign only. Existing services remain untouched.</p>
+      </div>
+
+      <form class="registry-page__form" [formGroup]="entityForm">
+        <mat-form-field appearance="outline"><mat-label>Entity Code</mat-label><input matInput formControlName="entityCode" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Entity Name</mat-label><input matInput formControlName="entityName" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Datasource</mat-label><input matInput formControlName="sourceName" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Storage Type</mat-label><input matInput formControlName="storageType" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Schema</mat-label><input matInput formControlName="objectSchema" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Table</mat-label><input matInput formControlName="objectName" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Primary Key</mat-label><input matInput formControlName="primaryKeyField" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Business Label</mat-label><input matInput formControlName="businessLabel" /></mat-form-field>
+        <mat-form-field appearance="outline"><mat-label>Root Searchable</mat-label><input matInput formControlName="rootSearchable" /></mat-form-field>
+        <mat-form-field appearance="outline" class="registry-page__form-full"><mat-label>Fields Configuration</mat-label><textarea matInput rows="6" formControlName="fieldsConfiguration"></textarea></mat-form-field>
+      </form>
+    </section>
+  </div>
 </section>

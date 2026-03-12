@@ -1,17 +1,74 @@
-.page-shell {
+.relation-page {
   display: grid;
   gap: 1.25rem;
+}
+
+.relation-page__hero,
+.relation-page__builder {
+  border-radius: 22px;
+  background: rgba(10, 16, 26, 0.9);
+  border: 1px solid rgba(142, 181, 255, 0.1);
+}
+
+.relation-page__hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 1rem;
+  padding: 1.3rem;
 }
 
 .page-kicker {
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: #7f8a99;
+  color: #7f94b3;
   font-size: 0.74rem;
 }
 
-h1 {
+h1,
+h2 {
   margin: 0.35rem 0 0;
-  color: #f5f7fa;
+  color: #f3f7ff;
+}
+
+.relation-page__subtitle,
+.relation-page__note {
+  margin: 0.45rem 0 0;
+  color: #8ea3c2;
+  line-height: 1.5;
+}
+
+.relation-page__content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.95fr);
+  gap: 1rem;
+}
+
+.relation-page__builder {
+  padding: 1.25rem;
+}
+
+.relation-page__builder-header {
+  margin-bottom: 1rem;
+}
+
+.relation-page__form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+@media (max-width: 1120px) {
+  .relation-page__content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .relation-page__hero,
+  .relation-page__form {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
 }

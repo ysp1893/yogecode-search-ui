@@ -1,37 +1,124 @@
-.page-shell {
+.admin-page {
   display: grid;
   gap: 1.25rem;
 }
 
-.page-shell__header {
+.admin-page__hero,
+.console-form,
+.admin-page__stats article {
+  border-radius: 22px;
+  background: rgba(10, 16, 26, 0.9);
+  border: 1px solid rgba(142, 181, 255, 0.1);
+}
+
+.admin-page__hero {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: start;
   gap: 1rem;
+  padding: 1.3rem;
 }
 
 .page-kicker {
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: #7f8a99;
+  color: #7f94b3;
   font-size: 0.74rem;
 }
 
-h1 {
+h1,
+h2 {
   margin: 0.35rem 0 0;
-  color: #f5f7fa;
+  color: #f3f7ff;
 }
 
-.action-bar {
+.admin-page__subtitle,
+.console-form__status {
+  margin: 0.45rem 0 0;
+  color: #8ea3c2;
+  line-height: 1.5;
+}
+
+.admin-page__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
 
-@media (max-width: 900px) {
-  .page-shell__header {
-    flex-direction: column;
-    align-items: flex-start;
+.admin-page__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+
+  article {
+    padding: 1rem 1.1rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  span {
+    color: #7f94b3;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  strong {
+    color: #f3f7ff;
+    font-size: 1.3rem;
+  }
+}
+
+.admin-page__content {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
+  gap: 1rem;
+}
+
+.console-form {
+  padding: 1.25rem;
+  align-self: start;
+}
+
+.console-form__header {
+  margin-bottom: 1rem;
+}
+
+.console-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+:host ::ng-deep .datasource-actions-cell {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+  height: 100%;
+}
+
+:host ::ng-deep .datasource-actions-cell__button {
+  border: 1px solid rgba(142, 181, 255, 0.22);
+  background: rgba(87, 148, 255, 0.08);
+  color: #dce7f7;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+@media (max-width: 1120px) {
+  .admin-page__content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  .admin-page__hero,
+  .admin-page__stats,
+  .console-form__grid {
+    grid-template-columns: 1fr;
+    display: grid;
   }
 }

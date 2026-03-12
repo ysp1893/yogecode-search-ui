@@ -1,0 +1,127 @@
+<section class="result-grid">
+  <div class="result-grid__header">
+    <div>
+      <p class="section-label">Results</p>
+      <h2>{{ title }}</h2>
+    </div>
+
+    <div class="result-grid__actions">
+      <span class="result-grid__count">{{ displayRowCount }} {{ rowCountLabel }}</span>
+
+      <button mat-stroked-button type="button" [matMenuTriggerFor]="columnMenu">
+        Column Visibility
+      </button>
+
+      <button mat-stroked-button type="button" [matMenuTriggerFor]="pageSizeMenu">
+        Page Size: {{ selectedPageSize }}
+      </button>
+
+      <button mat-stroked-button type="button" (click)="clearPinnedColumns()">
+        Clear Pins
+      </button>
+    </div>
+  </div>
+
+  @if (loading) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  <div class="result-grid__tabs" role="tablist" aria-label="Result views">
+    <button
+      type="button"
+      class="result-grid__tab"
+      [class.result-grid__tab--active]="activeTab === 'table'"
+      (click)="selectTab('table')">
+      Table
+    </button>
+    <button
+      type="button"
+      class="result-grid__tab"
+      [class.result-grid__tab--active]="activeTab === 'chart'"
+      (click)="selectTab('chart')">
+      Chart
+    </button>
+    <button
+      type="button"
+      class="result-grid__tab"
+      [class.result-grid__tab--active]="activeTab === 'json'"
+      (click)="selectTab('json')">
+      JSON
+    </button>
+  </div>
+
+  @if (activeTab === 'table') {
+    <div class="result-grid__tab-body">
+      @if (isBrowser) {
+        <ag-grid-angular
+          class="ag-theme-quartz-dark result-grid__table"
+          [style.height.px]="height"
+          [columnDefs]="internalColumnDefs"
+          [rowData]="rowData"
+          [defaultColDef]="defaultColDef"
+          [gridOptions]="gridOptions"
+          (gridReady)="onGridReady($event)"
+          (selectionChanged)="onSelectionChanged($event)">
+        </ag-grid-angular>
+      } @else {
+        <div class="result-grid__placeholder" [style.height.px]="height">
+          Grid will render in the browser.
+        </div>
+      }
+    </div>
+  }
+
+  @if (activeTab === 'chart') {
+    <div class="result-grid__tab-body result-grid__chart">
+      @if (chartData.length) {
+        @for (item of chartData; track item.label) {
+          <div class="chart-row">
+            <span class="chart-row__label">{{ item.label }}</span>
+            <div class="chart-row__bar-track">
+              <div class="chart-row__bar" [style.width.%]="(item.value / chartMax) * 100"></div>
+            </div>
+            <span class="chart-row__value">{{ item.value }}</span>
+          </div>
+        }
+      } @else {
+        <div class="result-grid__placeholder">
+          Run a query to generate a quick distribution preview.
+        </div>
+      }
+    </div>
+  }
+
+  @if (activeTab === 'json') {
+    <div class="result-grid__tab-body">
+      @if (rowData.length) {
+        <ngx-json-viewer [json]="rowData" [expanded]="false" />
+      } @else {
+        <div class="result-grid__placeholder">
+          Results JSON will appear here.
+        </div>
+      }
+    </div>
+  }
+</section>
+
+<mat-menu #columnMenu="matMenu" class="result-grid__menu">
+  @for (column of visibleColumns; track column.field) {
+    <div class="result-grid__menu-row">
+      <mat-checkbox
+        [checked]="!column.hide"
+        (change)="toggleColumn(column.field, $event.checked)">
+        {{ column.headerName || column.field }}
+      </mat-checkbox>
+
+      <button mat-button type="button" (click)="pinColumn(column.field)">Pin</button>
+    </div>
+  }
+</mat-menu>
+
+<mat-menu #pageSizeMenu="matMenu">
+  @for (size of pageSizeOptions; track size) {
+    <button mat-menu-item type="button" (click)="setPageSize(size)">
+      {{ size }}
+    </button>
+  }
+</mat-menu>

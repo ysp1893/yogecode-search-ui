@@ -1,0 +1,61 @@
+<section class="query-builder">
+  <div class="query-builder__intro">
+    <p class="panel-label">Logs Explorer</p>
+    <h1>Search workspace</h1>
+    <p class="query-builder__subtitle">
+      Build federated queries visually while keeping the underlying request payload unchanged.
+    </p>
+  </div>
+
+  <div class="query-builder__bar">
+    <mat-form-field appearance="outline" class="query-builder__entity">
+      <mat-label>Entity</mat-label>
+      <mat-select [value]="selectedEntity" (selectionChange)="onEntitySelection($event)">
+        @for (entity of entities; track entity.id ?? entity.entityCode) {
+          <mat-option [value]="entity.entityCode">{{ entity.entityCode }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-stroked-button type="button" (click)="addColumn.emit()">
+      Add Column
+    </button>
+
+    <button mat-stroked-button type="button" (click)="addFilter.emit()">
+      Add Filter
+    </button>
+
+    <mat-form-field appearance="outline" class="query-builder__time-range">
+      <mat-label>Time Range</mat-label>
+      <mat-select [value]="selectedTimeRange" (selectionChange)="onTimeRangeSelection($event)">
+        @for (range of timeRanges; track range) {
+          <mat-option [value]="range">{{ range }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-flat-button type="button" (click)="runQuery.emit()" [disabled]="isSearching">
+      @if (isSearching) {
+        Running...
+      } @else {
+        Run Query
+      }
+    </button>
+  </div>
+
+  <div class="query-builder__relations">
+    <mat-form-field appearance="outline">
+      <mat-label>Include Relations</mat-label>
+      <mat-select
+        [value]="selectedIncludes"
+        multiple
+        (selectionChange)="onIncludeSelection($event)"
+      >
+        @for (option of relationOptions; track option) {
+          <mat-option [value]="option">{{ option }}</mat-option>
+        }
+      </mat-select>
+      <mat-hint>{{ relationsHint }}</mat-hint>
+    </mat-form-field>
+  </div>
+</section>

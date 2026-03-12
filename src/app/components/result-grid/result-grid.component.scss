@@ -1,0 +1,136 @@
+.result-grid {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: 24px;
+  background: rgba(10, 16, 26, 0.9);
+  border: 1px solid rgba(142, 181, 255, 0.12);
+}
+
+.result-grid__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 1rem;
+
+  h2 {
+    margin: 0.25rem 0 0;
+    color: #f3f7ff;
+    font-size: 1.08rem;
+  }
+}
+
+.section-label {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  color: #7f94b3;
+}
+
+.result-grid__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.result-grid__count {
+  color: #8ea3c2;
+  font-size: 0.92rem;
+}
+
+.result-grid__tab-body {
+  padding-top: 1rem;
+}
+
+.result-grid__tabs {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.result-grid__tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #8ea3c2;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.result-grid__tab--active {
+  color: #f3f7ff;
+  border-bottom-color: #7aa8ff;
+}
+
+.result-grid__table,
+.result-grid__placeholder {
+  width: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.result-grid__placeholder {
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  color: #7f94b3;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.result-grid__chart {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.chart-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 220px) minmax(0, 1fr) auto;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.chart-row__label,
+.chart-row__value {
+  color: #dce7f7;
+  font-size: 0.92rem;
+}
+
+.chart-row__bar-track {
+  position: relative;
+  height: 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.chart-row__bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #5794ff, #5ed3b8);
+}
+
+.result-grid__menu-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.25rem 0.75rem;
+}
+
+@media (max-width: 860px) {
+  .result-grid__header,
+  .chart-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .result-grid__actions {
+    justify-content: flex-start;
+  }
+}

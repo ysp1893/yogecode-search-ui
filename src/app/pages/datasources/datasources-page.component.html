@@ -1,23 +1,101 @@
-<section class="page-shell">
-  <div class="page-shell__header">
+<section class="admin-page">
+  <header class="admin-page__hero">
     <div>
       <p class="page-kicker">Administration</p>
       <h1>Datasource management</h1>
+      <p class="admin-page__subtitle">Operate datasource connections from a console-style workspace with list, form, and connection health actions.</p>
     </div>
 
-    <div class="action-bar">
-      <button mat-stroked-button type="button">Create datasource</button>
-      <button mat-stroked-button type="button">Edit datasource</button>
-      <button mat-stroked-button type="button">Delete datasource</button>
-      <button mat-flat-button type="button" (click)="testFirstDatasource()">
-        Test connection
+    <div class="admin-page__actions">
+      <button mat-flat-button type="button" (click)="createDatasource()" [disabled]="creating">
+        {{ creating ? 'Saving...' : formMode === 'edit' ? 'Create From Form' : 'Add Datasource' }}
       </button>
+      <button mat-stroked-button type="button" (click)="editSelectedDatasource()">Edit</button>
+      <button mat-stroked-button type="button" (click)="deleteSelectedDatasource()">Delete</button>
+      <button mat-stroked-button type="button" (click)="testSelectedDatasource()">Test Connection</button>
     </div>
-  </div>
+  </header>
 
-  <app-result-table
-    [columnDefs]="columnDefs"
-    [rowData]="rows"
-    title="Registered datasources"
-  />
+  <section class="admin-page__stats">
+    <article>
+      <span>Total</span>
+      <strong>{{ datasources.length }}</strong>
+    </article>
+    <article>
+      <span>Active</span>
+      <strong>{{ datasources.length }}</strong>
+    </article>
+    <article>
+      <span>Selected</span>
+      <strong>{{ selectedDatasource?.sourceName || 'None' }}</strong>
+    </article>
+  </section>
+
+  <div class="admin-page__content">
+    <app-result-grid
+      [title]="'Datasource registry'"
+      [columnDefs]="columnDefs"
+      [rowData]="rows"
+      [height]="520"
+      [totalRows]="rows.length"
+      rowCountLabel="datasources"
+      (selectedRowChange)="onDatasourceSelected($event)"
+    />
+
+    <section class="console-form">
+      <div class="console-form__header">
+        <div>
+          <p class="page-kicker">{{ formMode === 'edit' ? 'Edit Preview' : 'Create' }}</p>
+          <h2>{{ formMode === 'edit' ? 'Datasource details' : 'Add datasource' }}</h2>
+        </div>
+        <p class="console-form__status">{{ statusMessage }}</p>
+      </div>
+
+      <form class="console-form__grid" [formGroup]="datasourceForm">
+        <mat-form-field appearance="outline">
+          <mat-label>Datasource Code</mat-label>
+          <input matInput formControlName="sourceCode" placeholder="cust-db" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Datasource Name</mat-label>
+          <input matInput formControlName="sourceName" placeholder="Customer Warehouse" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Database Type</mat-label>
+          <mat-select formControlName="dbType">
+            @for (type of dbTypes; track type) {
+              <mat-option [value]="type">{{ type }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Host</mat-label>
+          <input matInput formControlName="host" placeholder="db.internal.local" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Port</mat-label>
+          <input matInput type="number" formControlName="port" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Database Name</mat-label>
+          <input matInput formControlName="databaseName" placeholder="federated_search" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="username" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password" />
+        </mat-form-field>
+      </form>
+    </section>
+  </div>
 </section>

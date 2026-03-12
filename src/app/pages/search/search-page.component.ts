@@ -1,21 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, NgZone, inject } from '@angular/core';
+import { Component, ElementRef, NgZone, OnInit, ViewChild, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { ColDef } from 'ag-grid-community';
 import { catchError, of } from 'rxjs';
-import { FilterBuilderComponent } from '../../components/filter-builder/filter-builder.component';
-import { JsonViewerComponent } from '../../components/json-viewer/json-viewer.component';
-import { ResultTableComponent } from '../../components/result-table/result-table.component';
+import { ColumnSelectorComponent } from '../../components/column-selector/column-selector.component';
+import { FilterChipsComponent } from '../../components/filter-chips/filter-chips.component';
+import { InspectorPanelComponent } from '../../components/inspector-panel/inspector-panel.component';
+import { QueryBuilderComponent } from '../../components/query-builder/query-builder.component';
+import { ResultGridComponent } from '../../components/result-grid/result-grid.component';
 import { EntityService } from '../../core/services/entity.service';
 import { RelationService } from '../../core/services/relation.service';
 import { SearchService } from '../../core/services/search.service';
 import { Entity } from '../../models/entity.model';
 import { Relation } from '../../models/relation.model';
-import { PartialFailureResponse, SearchFilter, SearchRequest } from '../../models/search.model';
+import { PartialFailureResponse, SearchFilter, SearchRequest, SearchResponse } from '../../models/search.model';
 
 @Component({
   selector: 'app-search-page',
@@ -24,48 +23,57 @@ import { PartialFailureResponse, SearchFilter, SearchRequest } from '../../model
     CommonModule,
     ReactiveFormsModule,
     MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-    FilterBuilderComponent,
-    JsonViewerComponent,
-    ResultTableComponent
+    QueryBuilderComponent,
+    ColumnSelectorComponent,
+    FilterChipsComponent,
+    ResultGridComponent,
+    InspectorPanelComponent
   ],
   templateUrl: './search-page.component.html',
   styleUrl: './search-page.component.scss'
 })
-export class SearchPageComponent {
+export class SearchPageComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly searchService = inject(SearchService);
   private readonly entityService = inject(EntityService);
   private readonly relationService = inject(RelationService);
   private readonly ngZone = inject(NgZone);
-  private readonly changeDetectorRef = inject(ChangeDetectorRef);
 
+  protected isReady = false;
   protected entities: Entity[] = [];
   protected relationOptions: string[] = [];
-  protected entityFieldInputs: Record<string, string> = {
-    cdr: ''
+  protected selectedEntity = 'cdr';
+  protected selectedIncludes: string[] = [];
+  protected entityColumns: Record<string, string[]> = {
+    cdr: []
   };
   protected isSearching = false;
   protected requestPreview: SearchRequest = {
     entity: 'cdr',
-    include: ['customer'],
     page: 0,
     size: 20
+  };
+  protected responsePreview: SearchResponse | { message: string } = {
+    page: 0,
+    size: 20,
+    total: 0,
+    results: []
   };
   protected results: Array<Record<string, unknown>> = [];
   protected columnDefs: ColDef[] = [];
   protected partialFailures: string[] = [];
   protected searchError = '';
   protected relationsHint = 'Loading relations...';
+  protected selectedTimeRange = 'Last 24 hours';
+  protected showFilterComposer = false;
+  protected inspectorOpen = false;
+  protected selectedResultRow: Record<string, unknown> | null = null;
   protected responseMeta = {
     total: 0,
     rawCount: 0,
     flattenedCount: 0,
     columnCount: 0
   };
-  protected lastFirstRow: Record<string, unknown> | null = null;
 
   protected readonly searchForm = this.formBuilder.group({
     entity: ['cdr'],
@@ -76,35 +84,76 @@ export class SearchPageComponent {
 
   private filters: SearchFilter[] = [];
 
-  constructor() {
-    this.loadEntities();
-    this.loadRelations('cdr');
+  @ViewChild('columnSelectorSection')
+  private columnSelectorSection?: ElementRef<HTMLElement>;
+
+  @ViewChild('filterBuilderSection')
+  private filterBuilderSection?: ElementRef<HTMLElement>;
+
+  ngOnInit(): void {
+    setTimeout(() => {
+      this.loadEntities();
+    });
   }
 
-  protected onEntityChange(): void {
-    const entityCode = this.searchForm.getRawValue().entity ?? 'cdr';
-    this.searchForm.patchValue({ include: [] });
-    this.ensureEntityFieldInput(entityCode);
+  protected get entityFieldTargets(): string[] {
+    return [
+      this.selectedEntity,
+      ...this.selectedIncludes.filter((entity) => entity !== this.selectedEntity)
+    ];
+  }
+
+  protected get activeFilters(): SearchFilter[] {
+    return this.filters;
+  }
+
+  protected onEntitySelected(entityCode: string): void {
+    this.selectedEntity = entityCode;
+    this.selectedIncludes = [];
+    this.searchForm.patchValue({ entity: entityCode, include: [] }, { emitEvent: false });
     this.loadRelations(entityCode);
+    this.ensureEntityColumnBucket(entityCode);
+    this.updatePreview();
+  }
+
+  protected onIncludeChanged(include: string[]): void {
+    this.selectedIncludes = [...include];
+    this.searchForm.patchValue({ include }, { emitEvent: false });
+    this.entityFieldTargets.forEach((entity) => this.ensureEntityColumnBucket(entity));
     this.updatePreview();
   }
 
   protected onFiltersChanged(filters: SearchFilter[]): void {
     this.filters = filters;
-    this.requestPreview = this.buildPayload();
-  }
-
-  protected onEntityFieldsChanged(entityCode: string, value: string): void {
-    this.entityFieldInputs[entityCode] = value;
     this.updatePreview();
   }
 
-  protected get entityFieldTargets(): string[] {
-    const formValue = this.searchForm.getRawValue();
-    const rootEntity = formValue.entity ?? 'cdr';
-    const includes = formValue.include ?? [];
+  protected onAddColumnChip(event: { entity: string; field: string }): void {
+    this.ensureEntityColumnBucket(event.entity);
+    const nextColumns = new Set(this.entityColumns[event.entity] ?? []);
+    nextColumns.add(event.field);
+    this.entityColumns[event.entity] = Array.from(nextColumns);
+    this.updatePreview();
+  }
 
-    return [rootEntity, ...includes.filter((entity) => entity !== rootEntity)];
+  protected onRemoveColumnChip(event: { entity: string; field: string }): void {
+    this.entityColumns[event.entity] = (this.entityColumns[event.entity] ?? []).filter(
+      (field) => field !== event.field
+    );
+    this.updatePreview();
+  }
+
+  protected onTimeRangeChanged(range: string): void {
+    this.selectedTimeRange = range;
+  }
+
+  protected focusColumnBuilder(): void {
+    this.scrollToSection(this.columnSelectorSection);
+  }
+
+  protected openFilterBuilder(): void {
+    this.showFilterComposer = true;
+    setTimeout(() => this.scrollToSection(this.filterBuilderSection));
   }
 
   protected executeSearch(): void {
@@ -112,61 +161,48 @@ export class SearchPageComponent {
     this.partialFailures = [];
     this.isSearching = true;
     this.requestPreview = this.buildPayload();
-    this.changeDetectorRef.detectChanges();
 
     this.searchService.search(this.requestPreview).subscribe({
       next: (response) => {
-        console.log('Search response:', response);
-
-        this.ngZone.run(() => {
+        this.deferUiUpdate(() => {
           const rawResults = Array.isArray(response.results)
             ? (response.results as Array<Record<string, unknown>>)
             : [];
-          const normalizedRows = rawResults.map((result) =>
-            this.normalizeRow(result)
-          );
+          const normalizedRows = rawResults.map((result) => this.normalizeRow(result));
 
           this.isSearching = false;
           this.results = normalizedRows;
-          this.lastFirstRow = this.results[0] ?? null;
+          this.selectedResultRow = this.results[0] ?? null;
           this.partialFailures = this.formatPartialFailures(response.partialFailures);
           this.columnDefs = this.buildColumns(this.results);
+          this.responsePreview = response;
           this.responseMeta = {
             total: Number(response.total ?? rawResults.length ?? 0),
             rawCount: rawResults.length,
             flattenedCount: this.results.length,
             columnCount: this.columnDefs.length
           };
-          this.changeDetectorRef.detectChanges();
         });
       },
       error: (error) => {
-        console.error('Search error:', error);
-
-        this.ngZone.run(() => {
+        this.deferUiUpdate(() => {
           this.isSearching = false;
           this.results = [];
           this.columnDefs = [];
-          this.lastFirstRow = null;
+          this.selectedResultRow = null;
           this.responseMeta = {
             total: 0,
             rawCount: 0,
             flattenedCount: 0,
             columnCount: 0
           };
+          this.responsePreview = error?.error ?? { message: error?.message ?? 'Search failed.' };
           this.searchError =
             error?.error?.message ??
             error?.message ??
             'Search request failed. Please verify filters and selected relations.';
-          this.changeDetectorRef.detectChanges();
         });
       },
-      complete: () => {
-        this.ngZone.run(() => {
-          this.isSearching = false;
-          this.changeDetectorRef.detectChanges();
-        });
-      }
     });
   }
 
@@ -174,25 +210,42 @@ export class SearchPageComponent {
     this.requestPreview = this.buildPayload();
   }
 
+  protected toggleInspector(): void {
+    this.inspectorOpen = !this.inspectorOpen;
+  }
+
+  private scrollToSection(section?: ElementRef<HTMLElement>): void {
+    section?.nativeElement.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start'
+    });
+  }
+
   private loadEntities(): void {
     this.entityService
       .list()
       .pipe(catchError(() => of([])))
       .subscribe((entities) => {
-        this.entities = entities;
-        if (entities.length > 0) {
-          const selected = this.searchForm.getRawValue().entity;
-          const exists = entities.some((entity) => entity.entityCode === selected);
-          const nextEntity = exists ? selected : entities[0].entityCode;
+        this.deferUiUpdate(() => {
+          this.entities = entities;
+          if (entities.length > 0) {
+            const selected = this.selectedEntity;
+            const exists = entities.some((entity) => entity.entityCode === selected);
+            const nextEntity = exists ? selected : entities[0].entityCode;
 
-          if (!exists) {
-            this.searchForm.patchValue({ entity: nextEntity });
+            if (!exists) {
+              this.searchForm.patchValue({ entity: nextEntity }, { emitEvent: false });
+            }
+
+            this.selectedEntity = nextEntity ?? 'cdr';
+            this.searchForm.patchValue({ include: [] }, { emitEvent: false });
+            this.ensureEntityColumnBucket(nextEntity ?? 'cdr');
+            this.loadRelations(nextEntity ?? 'cdr');
+            this.updatePreview();
+          } else {
+            this.isReady = true;
           }
-
-          this.ensureEntityFieldInput(nextEntity ?? 'cdr');
-          this.loadRelations(nextEntity ?? 'cdr');
-          this.updatePreview();
-        }
+        });
       });
   }
 
@@ -201,18 +254,30 @@ export class SearchPageComponent {
       .list(entityCode)
       .pipe(catchError(() => of([] as Relation[])))
       .subscribe((relations) => {
-        this.relationOptions = relations.map((relation) => relation.toEntityCode);
-        this.relationsHint = this.relationOptions.length
-          ? `Available relations for ${entityCode}: ${this.relationOptions.join(', ')}`
-          : `No include relations are configured for ${entityCode}.`;
+        this.deferUiUpdate(() => {
+          this.relationOptions = relations.map((relation) => relation.toEntityCode);
+          this.relationsHint = this.relationOptions.length
+            ? `Available relations for ${entityCode}: ${this.relationOptions.join(', ')}`
+            : `No include relations are configured for ${entityCode}.`;
 
-        if (this.relationOptions.length === 1) {
-          this.searchForm.patchValue({ include: [this.relationOptions[0]] }, { emitEvent: false });
-        }
+          this.selectedIncludes = this.selectedIncludes.filter((include) =>
+            this.relationOptions.includes(include)
+          );
+          this.searchForm.patchValue({ include: this.selectedIncludes }, { emitEvent: false });
 
-        this.entityFieldTargets.forEach((entity) => this.ensureEntityFieldInput(entity));
-        this.updatePreview();
+          this.entityFieldTargets.forEach((entity) => this.ensureEntityColumnBucket(entity));
+          this.updatePreview();
+          this.isReady = true;
+        });
       });
+  }
+
+  private deferUiUpdate(callback: () => void): void {
+    this.ngZone.run(() => {
+      setTimeout(() => {
+        callback();
+      });
+    });
   }
 
   private buildPayload(): SearchRequest {
@@ -231,7 +296,7 @@ export class SearchPageComponent {
 
   private buildEntityFields(): Record<string, string[]> {
     return this.entityFieldTargets.reduce<Record<string, string[]>>((accumulator, entityCode) => {
-      const fields = this.parseFieldInput(this.entityFieldInputs[entityCode] ?? '');
+      const fields = this.entityColumns[entityCode] ?? [];
 
       if (fields.length) {
         accumulator[entityCode] = fields;
@@ -257,15 +322,8 @@ export class SearchPageComponent {
     });
   }
 
-  private parseFieldInput(value: string): string[] {
-    return value
-      .split(',')
-      .map((field) => field.trim())
-      .filter(Boolean);
-  }
-
-  private ensureEntityFieldInput(entityCode: string): void {
-    this.entityFieldInputs[entityCode] ??= '';
+  private ensureEntityColumnBucket(entityCode: string): void {
+    this.entityColumns[entityCode] ??= [];
   }
 
   private buildColumns(rows: Record<string, unknown>[]): ColDef[] {
@@ -310,3 +368,4 @@ export class SearchPageComponent {
     return value !== null && typeof value === 'object' && !Array.isArray(value);
   }
 }
+

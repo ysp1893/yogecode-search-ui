@@ -1,0 +1,54 @@
+<section class="filter-chips">
+  <div class="filter-chips__header">
+    <div>
+      <p class="section-label">Filters</p>
+      <h2>Constraint builder</h2>
+    </div>
+
+    <button mat-stroked-button type="button" (click)="toggleComposer()">
+      @if (openComposer) {
+        Close Builder
+      } @else {
+        Add Filter
+      }
+    </button>
+  </div>
+
+  <mat-chip-set class="filter-chips__list">
+    @for (filter of filters; track filter.field + '-' + filter.operator + '-' + $index) {
+      <mat-chip-row removable (removed)="removeFilter($index)">
+        {{ formatFilter(filter) }}
+        <button matChipRemove type="button" aria-label="Remove filter">x</button>
+      </mat-chip-row>
+    }
+
+    @if (!filters.length) {
+      <span class="filter-chips__empty">No filters applied yet.</span>
+    }
+  </mat-chip-set>
+
+  @if (openComposer) {
+    <form class="filter-chips__composer" [formGroup]="composerForm">
+      <mat-form-field appearance="outline">
+        <mat-label>Field</mat-label>
+        <input matInput formControlName="field" placeholder="username" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Operator</mat-label>
+        <mat-select formControlName="operator">
+          @for (option of operatorOptions; track option) {
+            <mat-option [value]="option">{{ option }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Value</mat-label>
+        <input matInput formControlName="value" placeholder="surya, active" />
+      </mat-form-field>
+
+      <button mat-flat-button type="button" (click)="addFilter()">Apply</button>
+    </form>
+  }
+</section>

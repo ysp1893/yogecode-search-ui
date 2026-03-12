@@ -22,16 +22,7 @@ export class SearchService {
   private normalizeResponse<T>(response: unknown): SearchResponse<T> {
     if (typeof response === 'string') {
       try {
-        const parsed = JSON.parse(response) as SearchResponse<T>;
-        return {
-          page: parsed.page ?? 0,
-          size: parsed.size ?? 0,
-          total: parsed.total ?? 0,
-          results: Array.isArray(parsed.results) ? parsed.results : [],
-          requestId: parsed.requestId,
-          rootEntity: parsed.rootEntity,
-          partialFailures: parsed.partialFailures ?? []
-        };
+        return this.normalizeResponse<T>(JSON.parse(response));
       } catch {
         return {
           page: 0,
@@ -40,6 +31,16 @@ export class SearchService {
           results: []
         };
       }
+    }
+
+    if (Array.isArray(response)) {
+      return {
+        page: 0,
+        size: response.length,
+        total: response.length,
+        results: response as T[],
+        partialFailures: []
+      };
     }
 
     const parsed = (response as SearchResponse<T>) ?? {

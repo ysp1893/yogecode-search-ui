@@ -1,5 +1,4 @@
 @use '@angular/material' as mat;
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
 @import 'ag-grid-community/styles/ag-grid.css';
 @import 'ag-grid-community/styles/ag-theme-quartz.css';
 
@@ -7,8 +6,14 @@
 
 :root {
   color-scheme: dark;
-  --app-bg: #1e1e1e;
-  --app-text: #e8e8e8;
+  --app-bg: #09111b;
+  --app-surface: #0d1624;
+  --app-surface-alt: #111d2f;
+  --app-border: rgba(147, 190, 255, 0.1);
+  --app-text: #e8eef8;
+  --app-muted: #8ea3c2;
+  --app-primary: #5794ff;
+  --app-accent: #5ed3b8;
 }
 
 html {
@@ -18,10 +23,10 @@ html {
       color: (
         theme-type: dark,
         primary: mat.$azure-palette,
-        tertiary: mat.$green-palette
+        tertiary: mat.$cyan-palette
       ),
-      typography: Roboto,
-      density: -1
+      typography: 'Segoe UI',
+      density: -2
     )
   );
 }
@@ -31,7 +36,7 @@ body {
   min-height: 100%;
   background: var(--app-bg);
   color: var(--app-text);
-  font-family: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
 }
 
 * {
@@ -49,8 +54,39 @@ textarea {
   width: 100%;
 }
 
+.mat-mdc-text-field-wrapper {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
 .mat-mdc-unelevated-button:not(:disabled) {
-  background: linear-gradient(90deg, #1f6feb, #20c997) !important;
+  background: linear-gradient(90deg, #5794ff, #5ed3b8) !important;
+  color: #06101a !important;
+}
+
+.mat-mdc-outlined-button,
+.mat-mdc-button-base {
+  border-radius: 12px !important;
+}
+
+.mat-mdc-chip {
+  --mdc-chip-elevated-container-color: rgba(87, 148, 255, 0.12);
+  --mdc-chip-label-text-color: #dbe8ff;
+}
+
+.mat-mdc-tab-group {
+  --mdc-secondary-navigation-tab-container-height: 44px;
+}
+
+.ag-theme-quartz-dark {
+  --ag-background-color: #0d1624;
+  --ag-foreground-color: #dce7f7;
+  --ag-border-color: rgba(147, 190, 255, 0.08);
+  --ag-header-background-color: #132036;
+  --ag-odd-row-background-color: rgba(255, 255, 255, 0.015);
+  --ag-row-hover-color: rgba(87, 148, 255, 0.1);
+  --ag-selected-row-background-color: rgba(87, 148, 255, 0.14);
+  --ag-font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --ag-wrapper-border-radius: 16px;
 }
 
 .ngx-json-viewer {
@@ -58,3 +94,4 @@ textarea {
   color: #d7dee7 !important;
   font-size: 0.9rem !important;
 }
+

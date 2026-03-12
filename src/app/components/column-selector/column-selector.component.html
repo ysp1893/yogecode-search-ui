@@ -1,0 +1,49 @@
+<section class="column-selector">
+  <div class="column-selector__header">
+    <div>
+      <p class="section-label">Columns</p>
+      <h2>Projection selector</h2>
+    </div>
+    <span>{{ entityTargets.length }} entities in scope</span>
+  </div>
+
+  <div class="column-selector__groups">
+    @for (entity of entityTargets; track entity) {
+      <article class="column-group">
+        <div class="column-group__header">
+          <div>
+            <p class="column-group__entity">{{ entity }}</p>
+            <p class="column-group__hint">Returned fields for {{ entity }}</p>
+          </div>
+        </div>
+
+        <mat-chip-set class="column-group__chips">
+          @for (field of columnsByEntity[entity]; track field) {
+            <mat-chip-row removable (removed)="removeColumn.emit({ entity, field })">
+              {{ field }}
+              <button matChipRemove type="button" aria-label="Remove {{ field }}">x</button>
+            </mat-chip-row>
+          }
+        </mat-chip-set>
+
+        <div class="column-group__composer">
+          <mat-form-field appearance="outline">
+            <mat-label>Add field</mat-label>
+            <input
+              matInput
+              [value]="draftValues[entity]"
+              (input)="draftValues[entity] = $any($event.target).value"
+              (keydown.enter)="$event.preventDefault(); addDraftColumn(entity)"
+              placeholder="resource.type, log_id, text_payload"
+            />
+          </mat-form-field>
+
+          <button mat-stroked-button type="button" (click)="addDraftColumn(entity)">
+            Add
+          </button>
+        </div>
+      </article>
+    }
+  </div>
+</section>
+

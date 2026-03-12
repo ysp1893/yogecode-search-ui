@@ -1,0 +1,40 @@
+<section class="inspector-panel" [class.inspector-panel--open]="open">
+  <div class="inspector-panel__header">
+    <div>
+      <p class="section-label">Inspect</p>
+      <h2>Request / response</h2>
+    </div>
+    <span>{{ open ? 'Expanded' : 'Collapsed' }}</span>
+  </div>
+
+  @if (open) {
+    <div class="inspector-panel__tabs" role="tablist" aria-label="Inspector views">
+      <button
+        type="button"
+        class="inspector-panel__tab"
+        [class.inspector-panel__tab--active]="activeTab === 'request'"
+        (click)="activeTab = 'request'">
+        Request JSON
+      </button>
+      <button
+        type="button"
+        class="inspector-panel__tab"
+        [class.inspector-panel__tab--active]="activeTab === 'response'"
+        (click)="activeTab = 'response'">
+        Response JSON
+      </button>
+    </div>
+
+    <div class="inspector-panel__content">
+      @if (activeTab === 'request') {
+        <ngx-json-viewer [json]="requestData" [expanded]="true" />
+      } @else {
+        <ngx-json-viewer [json]="responseData" [expanded]="false" />
+      }
+    </div>
+  } @else {
+    <div class="inspector-panel__placeholder">
+      Open the inspector to review the exact request and the latest response snapshot.
+    </div>
+  }
+</section>

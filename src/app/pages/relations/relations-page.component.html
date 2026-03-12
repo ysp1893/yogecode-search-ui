@@ -1,12 +1,85 @@
-<section class="page-shell">
-  <div>
-    <p class="page-kicker">Topology</p>
-    <h1>Entity relations</h1>
-  </div>
+<section class="relation-page">
+  <header class="relation-page__hero">
+    <div>
+      <p class="page-kicker">Topology</p>
+      <h1>Relation builder</h1>
+      <p class="relation-page__subtitle">Review entity links in a relationship builder layout modeled after observability admin consoles.</p>
+    </div>
+    <button mat-stroked-button type="button" disabled>Save Relation</button>
+  </header>
 
-  <app-result-table
-    [columnDefs]="columnDefs"
-    [rowData]="rows"
-    title="Federated relations"
-  />
+  <div class="relation-page__content">
+    <app-result-grid
+      [title]="'Relation registry'"
+      [columnDefs]="columnDefs"
+      [rowData]="rows"
+      [height]="500"
+      [totalRows]="rows.length"
+      rowCountLabel="relations"
+      (selectedRowChange)="onRelationSelected($event)"
+    />
+
+    <section class="relation-page__builder">
+      <div class="relation-page__builder-header">
+        <div>
+          <p class="page-kicker">Builder</p>
+          <h2>Relationship configuration</h2>
+        </div>
+        <p class="relation-page__note">Visual editor only. Existing relation services and APIs were not changed.</p>
+      </div>
+
+      <form class="relation-page__form" [formGroup]="relationForm">
+        <mat-form-field appearance="outline">
+          <mat-label>Relation Code</mat-label>
+          <input matInput formControlName="relationCode" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>From Entity</mat-label>
+          <mat-select formControlName="fromEntityCode">
+            @for (entityCode of entityCodes; track entityCode) {
+              <mat-option [value]="entityCode">{{ entityCode }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Field</mat-label>
+          <input matInput formControlName="fromField" placeholder="username" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>To Entity</mat-label>
+          <mat-select formControlName="toEntityCode">
+            @for (entityCode of entityCodes; track entityCode) {
+              <mat-option [value]="entityCode">{{ entityCode }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Field</mat-label>
+          <input matInput formControlName="toField" placeholder="UserName" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Relation Type</mat-label>
+          <mat-select formControlName="relationType">
+            @for (type of relationTypes; track type) {
+              <mat-option [value]="type">{{ type }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Join Strategy</mat-label>
+          <mat-select formControlName="joinStrategy">
+            @for (strategy of joinStrategies; track strategy) {
+              <mat-option [value]="strategy">{{ strategy }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </form>
+    </section>
+  </div>
 </section>

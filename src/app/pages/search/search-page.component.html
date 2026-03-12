@@ -1,127 +1,127 @@
-<section class="search-layout">
-  <div class="search-layout__main">
-    <section class="search-toolbar">
-      <div>
-        <p class="page-kicker">Discover</p>
-        <h1>Federated search workspace</h1>
-      </div>
-
-      <div class="search-toolbar__controls" [formGroup]="searchForm">
-        <mat-form-field appearance="outline">
-          <mat-label>Entity</mat-label>
-          <mat-select formControlName="entity" (selectionChange)="onEntityChange()">
-            @for (entity of entities; track entity.id ?? entity.entityCode) {
-              <mat-option [value]="entity.entityCode">{{ entity.entityCode }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Include relations</mat-label>
-          <mat-select
-            formControlName="include"
-            multiple
-            (selectionChange)="updatePreview()"
-          >
-            @for (option of relationOptions; track option) {
-              <mat-option [value]="option">{{ option }}</mat-option>
-            }
-          </mat-select>
-          <mat-hint>{{ relationsHint }}</mat-hint>
-        </mat-form-field>
-
-        <button mat-flat-button type="button" (click)="executeSearch()" [disabled]="isSearching">
-          <span class="search-button__content">
-            @if (isSearching) {
-              <span class="loading-spinner loading-spinner--button" aria-hidden="true"></span>
-              <span>Searching...</span>
-            } @else {
-              <span>Search</span>
-            }
-          </span>
-        </button>
-      </div>
-    </section>
-
-    <section class="entity-fields-panel">
-      <div>
-        <p class="page-kicker">Projection</p>
-        <h2>Choose fields by entity</h2>
-        <p class="entity-fields-panel__hint">
-          Enter comma-separated column names for each entity you want returned in the search result.
+<section class="search-page">
+  <div class="search-page__main">
+    @if (!isReady) {
+      <section class="search-page__boot-card">
+        <p class="section-label">Loading</p>
+        <h2>Preparing search workspace</h2>
+        <p class="search-page__selection-text">
+          Loading entities, relation metadata, and the initial query builder state.
         </p>
-      </div>
-
-      <div class="entity-fields-grid">
-        @for (entityCode of entityFieldTargets; track entityCode) {
-          <mat-form-field appearance="outline">
-            <mat-label>{{ entityCode }} fields</mat-label>
-            <textarea
-              matInput
-              rows="3"
-              [value]="entityFieldInputs[entityCode]"
-              (input)="onEntityFieldsChanged(entityCode, $any($event.target).value)"
-              placeholder="CDRID, UserName, AcctStatusType"
-            ></textarea>
-            <mat-hint>Example: {{ entityCode }}.id, {{ entityCode }}.name style is not needed; use raw column names only.</mat-hint>
-          </mat-form-field>
-        }
-      </div>
-    </section>
-
-    <section class="response-meta">
-      <span>Total: {{ responseMeta.total }}</span>
-      <span>Raw rows: {{ responseMeta.rawCount }}</span>
-      <span>Flattened rows: {{ responseMeta.flattenedCount }}</span>
-      <span>Columns: {{ responseMeta.columnCount }}</span>
-    </section>
-
-    @if (isSearching) {
-      <section class="loading-panel" aria-live="polite">
-        <div class="loading-panel__content">
-          <span class="loading-spinner" aria-hidden="true"></span>
-          <div>
-            <p class="page-kicker">Search in progress</p>
-            <p class="loading-panel__text">The API request has been sent. Results will appear here once the response is received.</p>
-          </div>
-        </div>
       </section>
     }
 
-    @if (lastFirstRow) {
-      <app-json-viewer [data]="lastFirstRow" title="First flattened row" />
-    }
+    <app-query-builder
+      [entities]="entities"
+      [selectedEntity]="selectedEntity"
+      [selectedIncludes]="selectedIncludes"
+      [relationOptions]="relationOptions"
+      [relationsHint]="relationsHint"
+      [isSearching]="isSearching"
+      [selectedTimeRange]="selectedTimeRange"
+      (entityChange)="onEntitySelected($event)"
+      (includeChange)="onIncludeChanged($event)"
+      (timeRangeChange)="onTimeRangeChanged($event)"
+      (addColumn)="focusColumnBuilder()"
+      (addFilter)="openFilterBuilder()"
+      (runQuery)="executeSearch()"
+    />
 
-    <app-filter-builder (filtersChanged)="onFiltersChanged($event)" />
+    <div class="search-page__builder-stack">
+      <section #columnSelectorSection class="search-page__builder-anchor">
+        <app-column-selector
+          [entityTargets]="entityFieldTargets"
+          [columnsByEntity]="entityColumns"
+          (addColumn)="onAddColumnChip($event)"
+          (removeColumn)="onRemoveColumnChip($event)"
+        />
+      </section>
+
+      <section #filterBuilderSection class="search-page__builder-anchor">
+        <app-filter-chips
+          [filters]="activeFilters"
+          [openComposer]="showFilterComposer"
+          (filtersChange)="onFiltersChanged($event)"
+          (composerToggled)="showFilterComposer = $event"
+        />
+      </section>
+    </div>
+
+    <section class="search-page__metrics">
+      <article>
+        <span>Total</span>
+        <strong>{{ responseMeta.total }}</strong>
+      </article>
+      <article>
+        <span>Raw Rows</span>
+        <strong>{{ responseMeta.rawCount }}</strong>
+      </article>
+      <article>
+        <span>Flattened Rows</span>
+        <strong>{{ responseMeta.flattenedCount }}</strong>
+      </article>
+      <article>
+        <span>Columns</span>
+        <strong>{{ responseMeta.columnCount }}</strong>
+      </article>
+    </section>
 
     @if (searchError) {
-      <section class="failure-panel">
-        <p class="page-kicker">Search error</p>
-        <div class="failure-row">{{ searchError }}</div>
+      <section class="search-page__alert search-page__alert--error">
+        <p class="search-page__alert-label">Search error</p>
+        <p>{{ searchError }}</p>
       </section>
     }
 
     @if (partialFailures.length) {
-      <section class="failure-panel">
-        <p class="page-kicker">Partial failures</p>
+      <section class="search-page__alert search-page__alert--warning">
+        <p class="search-page__alert-label">Partial failures</p>
         @for (failure of partialFailures; track failure) {
-          <div class="failure-row">{{ failure }}</div>
+          <p>{{ failure }}</p>
         }
       </section>
     }
 
-    <app-result-table
-      [columnDefs]="columnDefs"
-      [rowData]="results"
-      [height]="460"
-      title="Search results"
-    />
+    <section class="search-page__results">
+      <div class="search-page__results-header">
+        <div>
+          <p class="section-label">Explorer</p>
+          <h2>Query results</h2>
+        </div>
+
+        <button mat-stroked-button type="button" (click)="toggleInspector()">
+          {{ inspectorOpen ? 'Hide Inspect' : 'Inspect' }}
+        </button>
+      </div>
+
+      <app-result-grid
+        [title]="'AG Grid result table'"
+        [columnDefs]="columnDefs"
+        [rowData]="results"
+        [loading]="isSearching"
+        [height]="500"
+        [totalRows]="responseMeta.total"
+        rowCountLabel="records"
+        (selectedRowChange)="selectedResultRow = $event"
+      />
+    </section>
   </div>
 
-  <div class="search-layout__side">
-    <app-json-viewer
-      [data]="requestPreview"
-      title="JSON request preview"
-    />
-  </div>
+  <aside class="search-page__side">
+    <div class="search-page__inspector-wrap">
+      <app-inspector-panel
+        [open]="inspectorOpen"
+        [requestData]="requestPreview"
+        [responseData]="responsePreview"
+      />
+
+      @if (selectedResultRow) {
+        <section class="search-page__selection-card">
+          <p class="section-label">Selected Row</p>
+          <p class="search-page__selection-text">
+            A row is selected in the grid. Open the JSON tab to inspect the full flattened result payload.
+          </p>
+        </section>
+      }
+    </div>
+  </aside>
 </section>
